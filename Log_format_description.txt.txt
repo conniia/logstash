@@ -1,0 +1,64 @@
+防火墙日志等级分类
+防火墙将系统事件按以下严重性级别分类：
+1、	Emergency（紧急）: 关于SYN攻击、Tear Drop攻击和Ping of Death攻击的消息。
+
+2、	Alert（警示）：关于需要立即引起注意的情况（例如防火墙攻击和许可密钥到期）
+
+3、	Critical（关键）：关于影响设备功能的错误情况（例如高可用性（HA）状态更改）的消息。
+
+4、	Error（错误）：关于可能影响设备的错误情况（例如反病毒扫描失败或与SSH服务器通信失败）的消息。
+
+5、	Warning（警报）：关于可能影响设备功能的错误情况（例如连接到电子邮件服务器失败或认证失败、超时和成功）的消息。
+
+6、	Notification（通知）：关于常规事件（包括由admin发起的配置更改）的消息。
+
+7、	Information（信息）：可提供关于系统操作一般信息的消息。
+
+8、	Debugging（调试）：可提供调试时所用详细信息的消息。
+
+
+LOGSTASH数据清理结果：
+Alert（警示）
+日志格式：
+<185>SSG550: NetScreen device_id=0158052007000034 [Root]system-alert-00012: UDP flood! From 172.18.4.145:4019 to 123.151.78.110:8000, proto UDP (zone Trust int ethernet0/0). Occurred 391 times. (2018-04-19 18:00:35)（当以减慢系统速度为目的向该点发送UDP 封包，以至于系统再也无法处理有效的连接时，就发生了UDP 泛滥。）
+<185>SSG550: NetScreen device_id=0158052007000034 [Root]system-alert-00017: Address sweep! From 172.23.2.202 to 219.136.95.172, proto 1 (zone Trust int ethernet0/0). Occurred 1 times. (2018-04-20 22:03:12)（地址扫描攻击：与端口扫描攻击类似，当一个源IP 地址在定义的时间间隔（缺省值为5,000 微秒）内向不同的主机发送ICMP 响应要求（或ping）时，就会发生地址扫描攻击。）
+预清理的主要数据内容：
+针对“critical”等级的log数据，需要清理出来的数据有：1、level  2、event  3、sip  4、sport  5、dip  6、dport  7、proto  8、occurtimes
+ 
+Critical（关键）
+日志格式：
+<186>SSG550: NetScreen device_id=0158052007000034 [Root]system-critical-00437: SYN and FIN bits! From 172.23.2.120:57660 to 121.51.140.141:80, proto TCP (zone Trust int ethernet0/0). Occurred 1 times. (2018-04-19 14:29:23)（SYN and FIN Bits Set（SYN 和FIN 位的封包）：通常不会在同一封包中同时设置SYN 和FIN 标志。但是，攻击者可以通过发送同时置位两个标志的封包来查看将返回何种系统应答，从而确定出接收端上的系统的种类。接着，攻击者可以利用已知的系统漏洞来实施进一步的攻击。）
+预清理的主要数据内容：
+针对“critical”等级的log数据，需要清理出来的数据有：1、level  2、event  3、sip  4、sport  5、dip  6、dport  7、proto  8、occurtimes
+
+ 
+Warning（警报）
+日志格式：
+<188>SSG550: NetScreen device_id=0158052007000034 [Root]system-warning-00519: Admin user "wangzy" logged in for Web(https) management (port 443) from 172.17.2.224:60125 (2018-04-19 17:17:36)（管理员"wangzy" 从主机172.17.2.224:60125 上通过https方式登录）
+预清理的主要数据内容：
+   针对“warn”等级的log数据，需要清理出来的数据有：1、level  2、user  3、action  4、sip  5、sport  6、dport
+ 
+Information
+日志格式：
+<190>SSG550: NetScreen device_id=0158052007000034 [Root]system-information-00524: SNMP request from an unknown SNMP community at 172.17.0.142:19399 has been received. (2018-04-19 20:17:11)
+预清理的主要数据内容：
+    针对“Information”等级的log数据，需要清理出来的数据有：1、level  2、dip  3、dport
+ 
+  Notification
+日志格式：
+<189>SSG550: NetScreen device_id=0158052007000034 [Root]system-notification-00257(traffic): start_time="2018-04-20 11:18:58" duration=19 policy_id=107 service=tcp/port:5000 proto=6 src zone=Trust dst zone=Untrust action=Permit sent=234 rcvd=0 src=172.18.0.31 dst=183.63.134.10 src_port=59301 dst_port=5000 src-xlated ip=121.32.129.132 port=50365 dst-xlated ip=183.63.134.10 port=5000 session_id=235377 reason=Close - AGE OUT
+根据目前收集到的不同访问协议类型总共包括45种：
+         
+预清理的主要数据内容：
+  针对“Information”等级的log数据，需要清理出来的数据有：1、level  2、policy_id  3、service  4、src_zone  5、dst_zone  6、action  7、sent_byte  8、rcvd_byte  9、sip  10、dip  11、sport  12、dport  13、reason
+
+
+日志格式：
+<189>SSG550: NetScreen device_id=0158052007000034  [Root]system-notification-00531: No NTP server could be contacted. (2018-04-21 15:47:16)\u0000
+http://www.360doc.com/content/11/0809/11/4007071_139109563.shtml  根据该链接，我的理解应该是防火墙Juniper NTP netscreen 源接口没配置好造成的。
+ 
+目前还未清理出来的数据类型：
+1、	Emergency（紧急）2、Error（错误）3、Debugging（调试）
+处理方法：
+直接在junipor 设置web上搜索以上类型的日志数据，增加pattern。
+
