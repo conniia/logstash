@@ -1,0 +1,145 @@
+input{
+  udp {
+    port => 514
+    type => syslog
+  }
+}
+filter{
+  if [message] =~ "alert" or [message] =~ "emergency" {
+       grok {
+        patterns_dir => "/usr/logdata/patterner"
+        match => { "message" => "%{MYLOGALERT}" }
+        remove_field => ["@version","host"]
+        add_field => { "log_type" => "attack" }
+       }
+    }
+  if [message] =~ "critical" {
+   if [message] =~ "VIP server" {
+        grok {
+         patterns_dir => ["/usr/logdata/patterner"]
+         match => { "message" => "%{CRIT}" }
+         remove_field => ["@version","host"]
+         add_field => { "log_type" => "virtual IP" }
+         add_field => { "event" => "vip unable to connect" }
+         }
+     }
+   else {
+       grok {
+        patterns_dir => "/usr/logdata/patterner"
+        match => { "message" => "%{MYLOGCRIT}" }
+        remove_field => ["@version","host"]
+        add_field => { "log_type" => "attack" }
+       }
+     }
+   }
+  if [message] =~ "information" {
+    if [message] =~ "SNMP request" {
+       grok{
+        patterns_dir => "/usr/logdata/patterner"
+        match => { "message" => "%{MYLOGINFO}" }
+        remove_field => ["@version","host"]
+        add_field => { "log_type" => "snmp" }
+        add_field => { "event" => "snmp request" }
+       }
+     }
+   else if [message] =~ "DNS entries" {
+       grok {
+        patterns_dir => "/usr/logdata/patterner"
+        match => { "message" => "%{INFODNS}" }
+        remove_field => ["@version","host"]
+        add_field => { "log_type" => "dns" }
+        add_field => { "event" => "dns refresh" }
+       }
+     }
+   }
+  if [message] =~ "notification" {
+    if [message] =~ "service=tcp" or [message] =~ "service=udp" {
+       grok{
+        patterns_dir => ["/usr/logdata/patterner"]
+        match => { "message" => "%{TULOG}" }
+        remove_field => ["@version","host"]
+        add_field => { "log_type" => "traffic" }
+        }
+      }
+    else if [message] =~ "Address" {
+        grok {
+         patterns_dir => ["/usr/logdata/patterner"]
+         match => { "message" => "%{ADDRESS}" }
+         remove_field => ["@version","host"]
+         add_field => { "log_type" => "vip" }
+         add_field => { "event" => "address changed" }
+         }
+       }
+    else if [message] =~ "NTP server" {
+        grok {
+         patterns_dir => ["/usr/logdata/patterner"]
+         match => { "message" => "%{NTP}" }
+         remove_field => ["@version","host"]
+         add_field => { "log_type" => "NTP" }
+         add_field => { "event" => "NTP message" }
+        }
+      }
+    else if [message] =~ "DNS has been refreshed" {
+        grok {
+         patterns_dir => ["/usr/logdata/patterner"]
+         match => { "message" => "%{NOTIFDNS}" }
+         remove_field => ["@version","host"]
+         add_field => { "log_type" => "dns" }
+         add_field => { "event" => "dns refresh" }
+        }
+      }
+   else {
+       grok {
+       patterns_dir => ["/usr/logdata/patterner"]
+       match => { "message" => "%{MYLOGNOTIF}" }
+       remove_field => ["@version","host"]
+       add_field => { "log_type" => "traffic" }
+        }
+      }
+   if [message] =~ "Permit" {
+       mutate {
+        add_field => { "event" => "permit traffic" }
+        add_field => { "action" => "permit" }
+        }
+      }
+   else if [message] =~ "Deny" {
+       mutate {
+        add_field => { "event" => "deny traffic" }
+        add_field => { "action" => "deny" }
+        }
+      }
+   }
+  if [message] =~ "warning" {
+      grok {
+       patterns_dir => "/usr/logdata/patterner"
+       match => { "message" => "%{MYLOGWARN}" }
+       remove_field => ["@version","host"]
+       add_field => { "event" => "admin register" }
+    }
+  }
+   mutate {
+           add_field => { "flow" => "1" }
+           convert => { "sport" => "integer" }
+           convert => { "dport" => "integer" }
+           convert => { "sent_byte" => "integer" }
+           convert => { "rcvd_byte" => "integer" }
+           convert => { "occurtimes" => "integer" }
+           convert => { "policy_id" => "integer" }
+           convert => { "flow" => "integer" }
+          }
+  }
+output{
+  if "_grokparsefailure" in [tags]{
+     file {
+     path => "/usr/logdata/fail.txt"
+        }
+  }
+   elasticsearch{
+       hosts => ["172.17.5.142:9200"]
+       index => "junipor_syslog-%{+YYYY-MM-dd}"
+       document_type => "netflow_v9"
+      }
+  stdout{
+    codec => rubydebug
+   }
+ }
