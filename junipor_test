@@ -118,14 +118,12 @@ filter{
     }
   }
    mutate {
-           add_field => { "flow" => "1" }
            convert => { "sport" => "integer" }
            convert => { "dport" => "integer" }
            convert => { "sent_byte" => "integer" }
            convert => { "rcvd_byte" => "integer" }
            convert => { "occurtimes" => "integer" }
            convert => { "policy_id" => "integer" }
-           convert => { "flow" => "integer" }
           }
   }
 output{
