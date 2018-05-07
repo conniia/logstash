@@ -1,64 +1,123 @@
-����ǽ��־�ȼ�����
-����ǽ��ϵͳ�¼������������Լ�����ࣺ
-1��	Emergency��������: ����SYN������Tear Drop������Ping of Death��������Ϣ��
+防火墙日志等级分类
 
-2��	Alert����ʾ����������Ҫ��������ע���������������ǽ������������Կ���ڣ�
-
-3��	Critical���ؼ���������Ӱ���豸���ܵĴ������������߿����ԣ�HA��״̬���ģ�����Ϣ��
-
-4��	Error�����󣩣����ڿ���Ӱ���豸�Ĵ�����������練����ɨ��ʧ�ܻ���SSH������ͨ��ʧ�ܣ�����Ϣ��
-
-5��	Warning�������������ڿ���Ӱ���豸���ܵĴ���������������ӵ������ʼ�������ʧ�ܻ���֤ʧ�ܡ���ʱ�ͳɹ�������Ϣ��
-
-6��	Notification��֪ͨ�������ڳ����¼���������admin��������ø��ģ�����Ϣ��
-
-7��	Information����Ϣ�������ṩ����ϵͳ����һ����Ϣ����Ϣ��
-
-8��	Debugging�����ԣ������ṩ����ʱ������ϸ��Ϣ����Ϣ��
+1、	虚机机部署环境
+172.17.0.210：用来接收防火墙日志的ip地址
+软件: logstash 2.2、centos7、jdk 1.8
+172.17.5.142：本地虚机接收防火墙日志数据的ip地址
+软件：centos6、jdk 1.8、imap 2.7ch
+172.17.5.133：防火墙数据传输ip地址
+2、	数据清洗过程
 
 
-LOGSTASH�������������
-Alert����ʾ��
-��־��ʽ��
-<185>SSG550: NetScreen device_id=0158052007000034 [Root]system-alert-00012: UDP flood! From 172.18.4.145:4019 to 123.151.78.110:8000, proto UDP (zone Trust int ethernet0/0). Occurred 391 times. (2018-04-19 18:00:35)�����Լ���ϵͳ�ٶ�ΪĿ����õ㷢��UDP �����������ϵͳ��Ҳ�޷�������Ч������ʱ���ͷ�����UDP ���ġ���
-<185>SSG550: NetScreen device_id=0158052007000034 [Root]system-alert-00017: Address sweep! From 172.23.2.202 to 219.136.95.172, proto 1 (zone Trust int ethernet0/0). Occurred 1 times. (2018-04-20 22:03:12)����ַɨ�蹥������˿�ɨ�蹥�����ƣ���һ��ԴIP ��ַ�ڶ����ʱ������ȱʡֵΪ5,000 ΢�룩����ͬ����������ICMP ��ӦҪ�󣨻�ping��ʱ���ͻᷢ����ַɨ�蹥������
-Ԥ��������Ҫ�������ݣ�
-��ԡ�critical���ȼ���log���ݣ���Ҫ���������������У�1��level  2��event  3��sip  4��sport  5��dip  6��dport  7��proto  8��occurtimes
- 
-Critical���ؼ���
-��־��ʽ��
-<186>SSG550: NetScreen device_id=0158052007000034 [Root]system-critical-00437: SYN and FIN bits! From 172.23.2.120:57660 to 121.51.140.141:80, proto TCP (zone Trust int ethernet0/0). Occurred 1 times. (2018-04-19 14:29:23)��SYN and FIN Bits Set��SYN ��FIN λ�ķ������ͨ��������ͬһ�����ͬʱ����SYN ��FIN ��־�����ǣ������߿���ͨ������ͬʱ��λ������־�ķ�����鿴�����غ���ϵͳӦ�𣬴Ӷ�ȷ�������ն��ϵ�ϵͳ�����ࡣ���ţ������߿���������֪��ϵͳ©����ʵʩ��һ���Ĺ�������
-Ԥ��������Ҫ�������ݣ�
-��ԡ�critical���ȼ���log���ݣ���Ҫ���������������У�1��level  2��event  3��sip  4��sport  5��dip  6��dport  7��proto  8��occurtimes
 
- 
-Warning��������
-��־��ʽ��
-<188>SSG550: NetScreen device_id=0158052007000034 [Root]system-warning-00519: Admin user "wangzy" logged in for Web(https) management (port 443) from 172.17.2.224:60125 (2018-04-19 17:17:36)������Ա"wangzy" ������172.17.2.224:60125 ��ͨ��https��ʽ��¼��
-Ԥ��������Ҫ�������ݣ�
-   ��ԡ�warn���ȼ���log���ݣ���Ҫ���������������У�1��level  2��user  3��action  4��sip  5��sport  6��dport
- 
+
+3、防火墙数据分类
+防火墙将系统事件按以下严重性级别分类：
+1、	Emergency（紧急）: 关于SYN攻击、Tear Drop攻击和Ping of Death攻击的消息。
+2、	Alert（警示）：关于需要立即引起注意的情况（例如防火墙攻击和许可密钥到期）
+3、	Critical（关键）：关于影响设备功能的错误情况（例如高可用性（HA）状态更改）的消息。
+4、	Error（错误）：关于可能影响设备的错误情况（例如反病毒扫描失败或与SSH服务器通信失败）的消息。
+5、	Warning（警报）：关于可能影响设备功能的错误情况（例如连接到电子邮件服务器失败或认证失败、超时和成功）的消息。
+6、	Notification（通知）：关于常规事件（包括由admin发起的配置更改）的消息。
+7、	Information（信息）：可提供关于系统操作一般信息的消息。
+8、	Debugging（调试）：可提供调试时所用详细信息的消息。
+LOGSTASH数据清理结果：
+Alert（警示）
+1、日志格式：（attack类型）
+<185>SSG550: NetScreen device_id=0158052007000034 [Root]system-alert-00012: （a）! From 172.18.4.145:4019 to 123.151.78.110:8000, proto UDP (zone Trust int ethernet0/0). Occurred 391 times. (2018-04-19 18:00:35) 
+（a）	指代的有：
+WinNuke attack：NetScreen设备检测并纠正了NetBIOS会话的重叠偏移值服务（端口139）从指定的源IP地址和端口号发送到指定的地址。
+IP spoofing：NetScreen设备检测并拒绝了一个数据包，该数据包有一个源IP地址，并到达一个与NetScreen路由表相冲突的接口。
+Land attack：通过结合SYN洪水防御和IP欺骗检测技术， NetScreen设备检测并阻塞了源IP地址与目的地地址相同SYN包。
+ICMP flood：NetScreen设备检测到指定的ICMP响应请求的数量过多。
+UDP flood：NetScreen设备检测到指定的UDP数据包的数量过多。
+Port scan：NetScreen设备检测到到达指定接口的端口扫描数量过多。
+Address sweep：NetScreen设备检测到从指定的IP地址、端口的IP地址扫描数量过多。
+
+需要清理出来的数据有：1、level（string）（日志等级）  2、num_type(int) （日志类型编号）3、event（string）（事件类型）  3、sip(ip)  4、sport（int）  5、dip(ip)  6、dport（int）  7、proto(string)（该类型事件使用的协议）  8、occurtimes（int）（出现次数）
+日志类型细分：
+进一步增加log_type,分为：attack（具有攻击性）
+    （当前日志类型事件统计记录）
+
+
+Critical（关键）
+1、日志格式：（attack类型）
+<186>SSG550: NetScreen device_id=0158052007000034 [Root]system-critical-00437: （a）! From 172.23.2.120:57660 to 121.51.140.141:80, proto TCP (zone Trust int ethernet0/0). Occurred 1 times. (2018-04-19 14:29:23)
+（a）	包括的有：
+SYN and FIN Bits Set（SYN 和FIN 位的封包）：通常不会在同一封包中同时设置SYN 和FIN 标志。但是，攻击者可以通过发送同时置位两个标志的封包来查看将返回何种系统应答，从而确定出接收端上的系统的种类。接着，攻击者可以利用已知的系统漏洞来实施进一步的攻击。）
+Malicious URL：带有恶意url的数据包记录。
+Src IP session limit：
+SYN fragment：具有相同源和目的IP地址，破碎SYN段的事件记录。
+No TCP flag：设备检测到没有flag设置位的TCP包。
+Unknown protocol：NetScreen设备使用一种未知的协议来检测和阻断到达指定接口的流量。
+Bad IP option：NetScreen设备检测到一个数据包，其中IP数据报头的IP选项列表是
+不完整的。
+Dst IP session limit：NetScreen设备检测到相同目标IP地址的数据包数量过多。
+ZIP file blocked：NetScreen设备已经检测并阻塞了包含来自指定来源的.zip文件的数据包。
+   Java applet blocked：NetScreen设备已经检测并阻塞了包含指定的Java applet的数据包。
+EXE file blocked：NetScreen设备已经检测并阻塞了包含指定的.exe文件的数据包。
+ActiveX control blocked：NetScreen设备检测并屏蔽了包含ActiveX控件的数据包。
+ICMP fragment：NetScreen设备检测到一个碎片化的ICMP包。
+Large ICMP packet：NetScreen设备检测到一个大于1024字节的ICMP包。
+FIN but no ACK bit：带有FIN标志的TCP数据包通常也有一个ACK位。NetScreen设备有
+检测到一个包，在这个包中设置了FIN标志，但是ACK位并没有在flag字段中设置。
+SYN-ACK-ACK Proxy DoS: NetScreen设备已经创建了大量的SYN-ACK-ACK会话，并超过了SYN-ACK-ACK阈值。这些会话都是从相同的源IP地址到相同的目的IP地址。
+Fragmented traffic：管理员启用了屏幕选项，允许NetScreen设备屏蔽所有从指定接口接收到的IP数据包。
+需要清理出来的数据有：1、level（string）（日志等级）  2、num_type(int) （日志类型编号）3、event（string）（事件类型）  3、sip(ip)  4、sport（int）  5、dip(ip)  6、dport（int）  7、proto(string)（该类型事件使用的协议）  8、occurtimes（int）（出现次数）
+
+2、日志格式：（vip类型）
+<186>SSG550: NetScreen device_id=0158052007000034 [Root]system-critical-00023: VIP server 172.17.0.150 cannot be contacted. (2018-04-24 06:13:48)（虚拟ip不能连接）
+需要清理出来的数据有：1、level（string）（日志等级）  2、num_type(int) （日志类型编号）3、event（string）（事件类型）4、sip（ip）(VIP服务器地址) 
+
+日志类型细分：
+进一步增加log_type,分为：attack（具有攻击性）、vip（用户登陆类型）
+ （当前日志类型事件统计记录）
+（system应该是vip）
+
+Warning（警报）
+1、日志格式：（auth用户身份验证）
+<188>SSG550: NetScreen device_id=0158052007000034 [Root]system-warning-00519: Admin user "wangzy" logged in for Web(https) management (port 443) from 172.17.2.224:60125 (2018-04-19 17:17:36)（管理员"wangzy" 从主机172.17.2.224:60125 上通过https方式登录）
+需要清理出来的数据有：1、level（string）（日志等级）2、num_type(int) （日志类型编号） 3、event（string）（事件类型）  4、user（string）（用户名）5、action（string）（行为）  4、sip（ip）  5、sport(int)  
+
+
+
+
+
+
+
 Information
-��־��ʽ��
+1、日志格式：
 <190>SSG550: NetScreen device_id=0158052007000034 [Root]system-information-00524: SNMP request from an unknown SNMP community at 172.17.0.142:19399 has been received. (2018-04-19 20:17:11)
-Ԥ��������Ҫ�������ݣ�
-    ��ԡ�Information���ȼ���log���ݣ���Ҫ���������������У�1��level  2��dip  3��dport
- 
+需要清理出来的数据有：1、level（string）（日志等级）2、num_type(int) （日志类型编号） 3、event（string）（事件类型） 3、sip（ip）4、sport（int）
+2、	日志格式：
+<190>SSG550: NetScreen device_id=0158052007000034  [Root]system-information-00004: DNS entries have been automatically refreshed. (2018-05-04 06:28:50)\u0000
+需要清理出来的数据有：1、level（string）（日志等级）2、num_type(int) （日志类型编号） 3、event（string）（事件类型） 
+
+日志类型细分：
+进一步增加log_type,分为：snmp（snmp事件记录）、dns（dns事件记录）
+ （当前日志类型事件统计记录）
   Notification
-��־��ʽ��
+1、日志格式：（traffic类型）
 <189>SSG550: NetScreen device_id=0158052007000034 [Root]system-notification-00257(traffic): start_time="2018-04-20 11:18:58" duration=19 policy_id=107 service=tcp/port:5000 proto=6 src zone=Trust dst zone=Untrust action=Permit sent=234 rcvd=0 src=172.18.0.31 dst=183.63.134.10 src_port=59301 dst_port=5000 src-xlated ip=121.32.129.132 port=50365 dst-xlated ip=183.63.134.10 port=5000 session_id=235377 reason=Close - AGE OUT
-����Ŀǰ�ռ����Ĳ�ͬ����Э�������ܹ�����45�֣�
-         
-Ԥ��������Ҫ�������ݣ�
-  ��ԡ�Information���ȼ���log���ݣ���Ҫ���������������У�1��level  2��policy_id  3��service  4��src_zone  5��dst_zone  6��action  7��sent_byte  8��rcvd_byte  9��sip  10��dip  11��sport  12��dport  13��reason
+预清理的主要数据内容：
+  针对“Information”等级的log数据，需要清理出来的数据有：1、level（string）（日志等级）2、num_type(string) （日志类型编号） 3、policy_id(int)  4、service(string)(访问协议)  5、src_zone（string）（源ip区域）  5、dst_zone（string）（目的ip区域）  6、action（string）  7、sent_byte（int）  8、rcvd_byte（int）  9、sip（ip）  10、dip（ip）  11、sport(int)  12、dport(int)  13、reason（string）
 
-
-��־��ʽ��
+2、日志格式：（NTP类型）
 <189>SSG550: NetScreen device_id=0158052007000034  [Root]system-notification-00531: No NTP server could be contacted. (2018-04-21 15:47:16)\u0000
-http://www.360doc.com/content/11/0809/11/4007071_139109563.shtml  ���ݸ����ӣ��ҵ�����Ӧ���Ƿ���ǽJuniper NTP netscreen Դ�ӿ�û���ú���ɵġ�
+需要清理出来的数据有：1、level（string）（日志等级）2、num_type(int) （日志类型编号） 3、event（string）（事件类型）
+
+3、	日志格式：（address类型）
+<189>SSG550: NetScreen device_id=0158052007000034  [Root]system-notification-00001: Address dns_gj33 for IP address 113.96.150.132/255.255.255.255 in zone Untrust has been modified by wangzy via web from host 172.17.2.224 to 172.31.1.1:443 session. (2018-04-26 17:21:33)\u0000
+需要清理出来的数据有：1、level（string）（日志等级）2、num_type(int) （日志类型编号） 3、event（string）（事件类型）4、address_name（string）（ip地址名）5、dip（ip）6、domain_ip（ip） 7、dst_zone（string）8、behavior  9、sip（ip）
+
+日志类型细分：
+进一步增加log_type,分为：traffic（流量事件记录）、NTP（NTP事件记录）、address（address变更事件记录）
+  （当前日志类型事件统计记录）
+
+4、Dashboard设计
+1、从概览上面获取目前日志等级分布，以及相应的事件分布情况
  
-Ŀǰ��δ�����������������ͣ�
-1��	Emergency��������2��Error������3��Debugging�����ԣ�
-����������
-ֱ����junipor ����web�������������͵���־���ݣ�����pattern��
+2、端口分布（查看目前端口分布以及协议分布情况）
+ 
+
 
